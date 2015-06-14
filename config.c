@@ -7,7 +7,6 @@ void init_cc1125()
   init_spi_master();
 
   // configuration register through burst write
-  // data pointers! change!
   BurstRegAccess(WRITE, 0x0000, config_val, 47);
 
   // ext config reg through single write
@@ -18,7 +17,7 @@ void init_cc1125()
 
 }
 
-uint8_t SingleRegAccess(uint8_t r_nw, uint16_t addr, uint8_t* pointer)
+uint8_t SingleRegAccess(uint8_t r_nw, uint16_t addr, uint8_t data)
 {
     // check if it is an extended config reg
     uint8_t TempExt = (uint8_t) (addr >>8);
@@ -31,20 +30,20 @@ uint8_t SingleRegAccess(uint8_t r_nw, uint16_t addr, uint8_t* pointer)
     {
       //configuraion registers
       ChipStatus = spi(r_nw|TempAddr);
-      SingleTransfer (pointer);
+      SingleTransfer (data);
     }
     else if (TempExt == 0x2F)
     {
       //extended configuration registers
       ChipStatus = spi(r_nw|0x2F);
       spi(TempAddr);
-      SingleTransfer (pointer);
+      SingleTransfer (data);
     }
 
     return ChipStatus;
 }
 
-uint8_t BurstRegAccess(uint8_t r_nw, uint16_t addr, uint8_t *pointer, uint8_t len)
+uint8_t BurstRegAccess(uint8_t r_nw, uint16_t addr, uint8_t *data, uint8_t len)
 {
     //check if it is extended reg
     // check if it is an extended config reg
@@ -58,14 +57,14 @@ uint8_t BurstRegAccess(uint8_t r_nw, uint16_t addr, uint8_t *pointer, uint8_t le
     {
       //configuration registers
       ChipStatus = spi(r_nw|BURST|TempAddr);
-      BurstTransfer(pointer, len);
+      BurstTransfer(data, len);
     }
     else if (TempExt == 0x2F)
     {
         //exteneded configuration registers
         ChipStatus = spi(r_nw|BURST|0x2F);
         spi(TempAddr);
-        BurstTransfer(pointer, len);
+        BurstTransfer(data, len);
     }
     return ChipStatus;
 }
@@ -76,7 +75,10 @@ uint8_t CommandStrobe(uint8_t r_nw,uint8_t cmd)
   return (spi(r_nw|cmd));
 }
 
-uint8_t DirFIFOAccess(uint8_t r_nw, uint8_t addr, uint8_t* pointer, uint8_t len)
+/*
+ * havent decided what to do with FIFO access
+ *
+ * uint8_t DirFIFOAccess(uint8_t r_nw, uint8_t addr, uint8_t data, uint8_t len)
 {
   uint8_t ChipStatus;
 
@@ -85,19 +87,19 @@ uint8_t DirFIFOAccess(uint8_t r_nw, uint8_t addr, uint8_t* pointer, uint8_t len)
     //single access
     ChipStatus = spi(r_nw|0x3E);
     spi(addr);
-    SingleTransfer(pointer);
+    SingleTransfer(data);
   }
   else
   {
     //burst access
     ChipStatus = spi(r_nw|BURST|0x3E);
     spi(addr);
-    BurstTransfer(pointer,len);
+    BurstTransfer(data,len);
   }
   return ChipStatus;
 }
 
-uint8_t StandardFIFOAccess (uint8_t dirFIFO, uint8_t* pointer,uint8_t len)
+uint8_t StandardFIFOAccess (uint8_t dirFIFO, uint8_t data,uint8_t len)
 {
   uint8_t ChipStatus;
   if (len ==1)
@@ -106,12 +108,12 @@ uint8_t StandardFIFOAccess (uint8_t dirFIFO, uint8_t* pointer,uint8_t len)
     if (dirFIFO == RX)
     {
         ChipStatus = spi(CC1125_SINGLE_RXFIFO);
-        SingleTransfer(pointer);
+        SingleTransfer(data);
     }
     else if (dirFIFO == TX)
     {
       ChipStatus = spi(CC1125_SINGLE_TXFIFO);
-      SingleTransfer(pointer);
+      SingleTransfer(data);
     }
     else
       return 0;
@@ -121,12 +123,12 @@ uint8_t StandardFIFOAccess (uint8_t dirFIFO, uint8_t* pointer,uint8_t len)
     if(dirFIFO == RX)
     {
       ChipStatus = spi(CC1125_BURST_RXFIFO);
-      BurstTransfer(pointer,len);
+      BurstTransfer(data,len);
     }
     else if (dirFIFO == TX)
     {
       ChipStatus = spi(CC1125_BURST_TXFIFO);
-      BurstTransfer(pointer,len);
+      BurstTransfer(data,len);
     }
     else
       return 0;
@@ -134,21 +136,20 @@ uint8_t StandardFIFOAccess (uint8_t dirFIFO, uint8_t* pointer,uint8_t len)
 
   return ChipStatus;
 }
-
-void SingleTransfer (uint8_t *pointer)
+*/
+void SingleTransfer (uint8_t data)
 {
-    *pointer = spi(*pointer);
+    data = spi(data);
     // pull CSn high to terminate transfer
     PORTB |= _BV(4);
 }
 
-void BurstTransfer(uint8_t *pointer, uint8_t len)
+void BurstTransfer(uint8_t* data, uint8_t len)
 {
   uint8_t i;
   for (i = 0;i<len;i++)
   {
-    *pointer = spi(*pointer);
-    pointer = pointer+1;
+    data[i] = spi(data[i]);
   }
   // pull CSn high to terminate transfer
   PORTB |= _BV(4);

@@ -1,2 +1,1 @@
-# summer
 for cubesat
