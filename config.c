@@ -83,6 +83,10 @@ uint8_t CommandStrobe(uint8_t cmd)
 }
 
 
+
+//direct FIFO Access can be used for debugging purposes together with the FIFO pointers from ext regs.
+//addr < 0x80: TX FIFO
+//0x80 ≤ addr ≤ 0xFF: RX FIFO
 uint8_t DirFIFOAccess(uint8_t r_nw, uint8_t addr, uint8_t* data, uint8_t len)
 {
   uint8_t ChipStatus;
@@ -90,56 +94,68 @@ uint8_t DirFIFOAccess(uint8_t r_nw, uint8_t addr, uint8_t* data, uint8_t len)
   if (len==1)
   {
     //single access
-    ChipStatus = spi(r_nw|0x3E);
-    spi(addr);
-    SingleTransfer(data);
+    SlaveSel();
+    ChipStatus = SingleTransfer(r_nw|0x3E);
+    SingleTransfer(addr);
+    SingleTransfer(*data);
+    SlaveUnsel();
   }
   else
   {
     //burst access
-    ChipStatus = spi(r_nw|BURST|0x3E);
-    spi(addr);
+    SlaveSel();
+    ChipStatus = SingleTransfer(r_nw|BURST|0x3E);
+    SignleTransfer(addr);
     BurstTransfer(data,len);
+    SlaveUnsel();
   }
   return ChipStatus;
 }
 
-uint8_t StandardFIFOAccess (uint8_t dirFIFO, uint8_t data,uint8_t len)
+
+uint8_t StandardFIFOAccess (uint8_t dirFIFO, uint8_t* data,uint8_t len)
 {
   uint8_t ChipStatus;
   if (len ==1)
   {
     //single access
     if (dirFIFO == RX)
-    {
-        ChipStatus = spi(CC1125_SINGLE_RXFIFO);
-        SingleTransfer(data);
-    }
+        ChipStatus = SingleStandardFIFO(CC1125_SINGLE_RXFIFO, *data);
     else if (dirFIFO == TX)
-    {
-      ChipStatus = spi(CC1125_SINGLE_TXFIFO);
-      SingleTransfer(data);
-    }
-    else
-      return 0;
+        ChipStatus = SingleStandardFIFO(CC1125_SINGLE_TXFIFO, *data);
+         else
+            return 0;
   }
   else
   {
     if(dirFIFO == RX)
-    {
-      ChipStatus = spi(CC1125_BURST_RXFIFO);
-      BurstTransfer(data,len);
-    }
+        ChipStatus = BurstStandardFIFO(CC1125_BURST_RXFIFO, data, len);
     else if (dirFIFO == TX)
-    {
-      ChipStatus = spi(CC1125_BURST_TXFIFO);
-      BurstTransfer(data,len);
-    }
-    else
-      return 0;
+            ChipStatus = BurstStandardFIFO(CC1125_BURST_TXFIFO, data, len);
+         else
+            return 0;
   }
 
   return ChipStatus;
 }
 
 
+uint8_t SingleStandardFIFO (uint16_t reg, uint8_t* data)
+{
+    uint8_t ChipStatus;
+    SlaveSel();
+    ChipStatus = SingleTransfer(reg);
+    SingleTransfer(*data);
+    SlaveUnsel();
+    return ChipStatus;
+}
+
+uint8_t BurstStandardFIFO (uint16_t reg, uint8_t* data, uint8_t len)
+{
+    uint8_t ChipStatus;
+    SlaveSel();
+    ChipStatus = SingleTransfer(reg);
+    BurstTransfer(data,len);
+    SlaveUnsel();
+    return ChipStatus;
+}
