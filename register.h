@@ -192,7 +192,7 @@
 #define CC1125_SINGLE_TXFIFO            0x003F      /*  TXFIFO  - Single accecss to Transmit FIFO */
 #define CC1125_BURST_TXFIFO             0x007F      /*  TXFIFO  - Burst accecss to Transmit FIFO  */
 #define CC1125_SINGLE_RXFIFO            0x00BF      /*  RXFIFO  - Single accecss to Receive FIFO  */
-#define CC1125_BURST_RXFIFO             0x00FF      /*  RXFIFO  - Busrrst ccecss to Receive FIFO  */
+#define CC1125_BURST_RXFIFO             0x00FF      /*  RXFIFO  - Busrrst accecss to Receive FIFO  */
 
 #define CC1125_LQI_CRC_OK_BM            0x80
 #define CC1125_LQI_EST_BM               0x7F

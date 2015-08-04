@@ -122,7 +122,7 @@ static const uint8_t config_val[47]=
 //prototypes
 
 /**
- * @brief init_cc1125: initialise the chip, set up config through burst, ext config through single, set mode etc.
+ * @brief init_cc1125: initialise the chip, set up config reg through burst, ext config reg through single, set mode etc.
  */
 void init_cc1125();
 

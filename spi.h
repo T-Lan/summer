@@ -2,19 +2,16 @@
 #include <avr/io.h>
 
 /**
- * @brief init_spi_master
+ * @brief InitSPIMaster
  * set MCU as master
  * configure pin direction
  * configure SPI clock rate
  * enable SPI
  */
-void init_spi_master(void);
-
-/**
- * @brief spi
- * @param b: 8-bit data to be sent
- * @return 8-bit data received
- */
-uint8_t spi(uint8_t b);
+void InitSPIMaster(void);
 
 
+uin8_t SingleTransfer(uint8_t data);
+void BurstTransfer(uint8_t* data, uint8_t len);
+void slave_sel();
+void slave_unsel();
